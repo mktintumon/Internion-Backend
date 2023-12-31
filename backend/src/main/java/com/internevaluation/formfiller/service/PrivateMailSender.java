@@ -19,6 +19,8 @@ public class PrivateMailSender {
     //    private PrivateMailService privateMailService;
     @Autowired
     private JavaMailSender javaMailSender;
+
+    @Async
     public void sendPrivateMail(ListOfUser listOfUser) throws MessagingException {
         if (listOfUser != null && listOfUser.getListUser() != null) {
             for (int i=0;i<listOfUser.getListUser().size();i++){
@@ -28,7 +30,7 @@ public class PrivateMailSender {
     }
 
     private String buildEmail(String senderName, String receiverName) {
-        return "Document Sent from "+senderName+ ". " + " Document password is the sendername.";
+        return "Document Sent from "+senderName+ ". " + " (Document password is the sendername)";
     }
 
     @Async
@@ -46,7 +48,6 @@ public class PrivateMailSender {
             javaMailSender.send(message);
         }catch (MessagingException | IOException e) {
             e.printStackTrace();
-            // Handle exceptions
         }
     }
 

@@ -239,6 +239,7 @@ public class PdfController {
         List<UserEntity> userDetailsList=customUserDetailService.findAllUser();
         return userDetailsList;
     }
+
     @GetMapping("/generate/{userId}")
     public ResponseEntity<Map<String, String>> generateCaptcha(@PathVariable("userId")String userId ) throws IOException {
         String captchaText = generateRandomText();
@@ -277,16 +278,10 @@ public class PdfController {
         int width = 200;
         int height = 80;
 
-
-
-
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         Graphics2D g2d = image.createGraphics();
         g2d.setColor(Color.WHITE);
         g2d.fillRect(0, 0, width, height);
-
-
-
         g2d.setFont(new java.awt.Font("Arial", Font.BOLD, 30));
         g2d.setColor(Color.BLACK);
 
@@ -295,11 +290,8 @@ public class PdfController {
         int y = height / 2 + 10;
         g2d.drawString(text, x, y);
 
-
         addNoise(g2d, width, height);
-
         g2d.dispose();
-
         return image;
     }
 
