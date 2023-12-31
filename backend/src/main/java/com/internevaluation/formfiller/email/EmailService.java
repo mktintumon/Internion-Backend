@@ -14,6 +14,7 @@ public class EmailService implements EmailSender{
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
+
     @Override
     @Async
     public void send(String to, String email) throws MessagingException {
@@ -24,6 +25,8 @@ public class EmailService implements EmailSender{
             helper.setTo(to);
             helper.setSubject("Confirm your email");
             helper.setFrom("priyanshulodha181@gmail.com");
+
+
             mailSender.send(mimeMessage);
         } catch (MessagingException e){
             throw new IllegalStateException("failed to send email");

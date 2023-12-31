@@ -6,6 +6,7 @@ import com.internevaluation.formfiller.repo.UserRepo;
 import dev.samstevens.totp.secret.DefaultSecretGenerator;
 import dev.samstevens.totp.secret.SecretGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -32,6 +33,7 @@ public class CustomUserDetailService implements UserDetailsService {
             throw new Exception("User Exist");
         }
         String link= "http://localhost:8080/api/register/verified/"+user.getEmail();
+
         emailSender.send(user.getEmail(),buildEmail(user.getUsername(),link));
         SecretGenerator generator = new DefaultSecretGenerator();
         String secret = generator.generate();

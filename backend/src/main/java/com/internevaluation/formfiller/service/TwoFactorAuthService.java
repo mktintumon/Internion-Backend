@@ -18,9 +18,9 @@ public class TwoFactorAuthService {
     }
     public String generateQrCodeImageUri(String secret){
         QrData data=new QrData.Builder()
-                .label("Cyraacs 2FA example")
+                .label("Multi-Factor Auth Test")
                 .secret(secret)
-                    .issuer("Priyanshu")
+                    .issuer("Internion Team")
                 .algorithm(HashingAlgorithm.SHA1)
                 .digits(6)
                 .period(30)

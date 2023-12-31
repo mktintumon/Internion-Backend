@@ -72,15 +72,6 @@ public class PdfController {
         return twoFactorAuthService.isOtpValid(dummy.getSecret_key(),otp);
     }
 
-
-//    @GetMapping("/register/verified/{username}")
-//    public String verifyRegistration(@PathVariable(name = "username") String username){
-//        UserEntity temp=userRepo.findByEmail(username);
-//        temp.setVerify_email(true);
-//        userRepo.save(temp);
-//        return "success";
-//    }
-
     @GetMapping("/register/verified/{username}")
     public RedirectView verifyRegistration(@PathVariable(name = "username") String username, RedirectAttributes redirectAttributes) {
         UserEntity temp = userRepo.findByEmail(username);
@@ -106,13 +97,7 @@ public class PdfController {
         }
     }
 
-//    @GetMapping("/register/generateQr")
-//    public String generateQr(@RequestParam String email){
-//
-//        UserEntity temp=userRepo.findByEmail(email);
-//
-//        return twoFactorAuthService.generateQrCodeImageUri(temp.getSecret_key());
-//    }
+
 
 
     @GetMapping("/register/validateOtp")
@@ -121,110 +106,134 @@ public class PdfController {
         return twoFactorAuthService.isOtpValid(temp.getSecret_key(),validateUser.getOtp());
     }
 
+
+
     @PostMapping("/residenceform")
-    public String getResidenceForm(@RequestBody ResidenceCertificateForm certificateForm){
-        Document document = new Document();
+    public String getResidenceForm(@RequestBody ResidenceCertificateForm certificateForm) {
         try {
             List<FileList> fileList = fileRepo.findAllByUsername(certificateForm.getName());
+
+            String basePath = "C:\\Users\\Mohit\\Desktop\\Internion-Backend\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\datafolder\\";
+
             if (fileList.isEmpty()) {
-                Path path = Paths.get("C:\\Users\\Mohit\\Desktop\\Internion\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\datafolder\\"+certificateForm.getName());
+                Path path = Paths.get(basePath + certificateForm.getName());
                 Files.createDirectories(path);
-                //FileList user = FileList.builder().username(certificateForm.getName()).filename(certificateForm.getName() + "-" + "1").build();
-               FileList user=new FileList(certificateForm.getName(),certificateForm.getName() + "-" + "1");
-                PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream("C:\\Users\\Mohit\\Desktop\\Internion\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\datafolder\\" + certificateForm.getName() + "\\" + user.getFilename() + ".pdf"));
-                writer.setEncryption(certificateForm.getName().getBytes(), certificateForm.getName().getBytes(), PdfWriter.ALLOW_PRINTING, PdfWriter.ENCRYPTION_AES_128);
-                //FileList tempUser = FileList.builder().username(user.getUsername()).filename(user.getFilename()).count(1).build();
-                FileList tempUser=new FileList(1,user.getUsername(),user.getFilename(),certificateForm.getEmail());
-                fileRepo.save(tempUser);
+
+                FileList user = new FileList(certificateForm.getName(), certificateForm.getName() + "-1");
+                generatePdf(certificateForm, user, basePath);
             } else {
-                Integer count = fileList.get(fileList.size()-1).getCount();
+                Integer count = fileList.get(fileList.size() - 1).getCount();
                 int newCount = (count != null) ? count + 1 : 1;
-                PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream("C:\\Users\\Mohit\\Desktop\\Internion\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\datafolder\\" + certificateForm.getName() + "\\" + certificateForm.getName() + "-" + newCount + ".pdf"));
-                writer.setEncryption(certificateForm.getName().getBytes(), certificateForm.getName().getBytes(), PdfWriter.ALLOW_PRINTING, PdfWriter.ENCRYPTION_AES_128);
-                //FileList tempUser = FileList.builder().username(fileList.getUsername()).filename(fileList.getFilename()).count(newCount).build();
-                FileList tempUser=new FileList(newCount,certificateForm.getName(),  certificateForm.getName() + "-" + newCount,certificateForm.getEmail());
-                fileRepo.save(tempUser);
+
+                FileList user = new FileList(newCount, certificateForm.getName(), certificateForm.getName() + "-" + newCount, certificateForm.getEmail());
+                generatePdf(certificateForm, user, basePath);
             }
         } catch (Exception e) {
-            return e.toString();
+            // Log the exception
+            e.printStackTrace();
+            return "Error processing the request";
         }
 
-        document.open();
-        Path imagePath = Paths.get("C:\\Users\\Mohit\\Desktop\\Internion\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\image\\bharat_logo.png");
-
-        Font titleFont = FontFactory.getFont(FontFactory.COURIER_BOLD, 18, BaseColor.BLACK);
-        Paragraph title = new Paragraph("Residence Certification Form", titleFont);
-        title.setAlignment(Element.ALIGN_CENTER);
-        Font contentFont = FontFactory.getFont(FontFactory.COURIER_OBLIQUE, 12, BaseColor.BLACK);
-        Paragraph content=new Paragraph("This is to certify that Sri/Smt -",contentFont);
-        Font boldFont = FontFactory.getFont(FontFactory.COURIER_BOLD, 12, Font.BOLD, BaseColor.BLACK);
-        Chunk boldChunk = new Chunk(certificateForm.getName(), boldFont);
-        content.add(boldChunk);
-        content.add(new Chunk(" s/o, w/o ",contentFont));
-        content.add(new Chunk(certificateForm.getParent_name(), boldFont));
-
-        Paragraph content2 = new Paragraph("has been residing at the following address in Village/Town ", contentFont);
-        content2.add(new Chunk(certificateForm.getVillage(),boldFont));
-        content2.add(new Chunk(" of",contentFont));
-        Paragraph content3=new Paragraph("the ");
-        Chunk talukaChunk=new Chunk(certificateForm.getTaluka(),boldFont);
-        content3.add(talukaChunk);
-        content3.add(new Chunk(" taluska of ",contentFont));
-        Chunk districtChunk=new Chunk(certificateForm.getDistrict(),boldFont);
-        content3.add(districtChunk);
-        content3.add(new Chunk(" District during the period noted below.",contentFont));
-        //Paragraph content3 = new Paragraph("Kota taluska of Chittor District during the period noted below.", contentFont);
-        Paragraph content4 = new Paragraph(certificateForm.getVillage(), boldFont);
-        Paragraph content5 = new Paragraph(certificateForm.getDate_of_register(), boldFont);
-
-        content4.setAlignment(Element.ALIGN_LEFT);
-        content4.setLeading(14f);
-        content5.setAlignment(Element.ALIGN_LEFT);
-        content5.setLeading(14f);
-        try {
-            Image img = Image.getInstance(imagePath.toAbsolutePath().toString());
-            document.add(Chunk.NEWLINE);
-            img.scaleAbsolute(60f, 60f);
-            float xPosition = (document.getPageSize().getWidth() - img.getScaledWidth()) / 2;
-            img.setAbsolutePosition(xPosition, document.getPageSize().getHeight() - img.getScaledHeight() - 50); // Adjust the Y position as needed
-            document.add(img);
-            document.add(new Paragraph());
-            document.add(new Paragraph());
-            document.add(new Paragraph());
-            document.add(Chunk.NEWLINE);
-            document.add(Chunk.NEWLINE);
-            document.add(Chunk.NEWLINE);
-            document.add(Chunk.NEWLINE);
-            document.add(Chunk.NEWLINE);
-            document.add(Chunk.NEWLINE);
-            document.add(Chunk.NEWLINE);
-            document.add(Chunk.NEWLINE);
-            document.add(title);
-            document.add(Chunk.NEWLINE);
-            document.add(Chunk.NEWLINE);
-            document.add(content);
-            document.add(Chunk.NEWLINE);
-            document.add(content2);
-            document.add(Chunk.NEWLINE);
-            document.add(content3);
-            document.add(Chunk.NEWLINE);
-            document.add(Chunk.NEWLINE);
-            document.add(Chunk.NEWLINE);
-            document.add(content4);
-            document.add(Chunk.NEWLINE);
-            document.add(content5);
-        }
-        catch (Exception e){
-            return e.toString();
-        }
-        document.close();
         return "added success";
     }
+
+    private void generatePdf(ResidenceCertificateForm certificateForm, FileList user, String basePath) throws Exception {
+        Document document = new Document();
+
+        try {
+            PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(basePath + certificateForm.getName() + "\\" + user.getFilename() + ".pdf"));
+            writer.setEncryption(certificateForm.getName().getBytes(), certificateForm.getName().getBytes(), PdfWriter.ALLOW_PRINTING, PdfWriter.ENCRYPTION_AES_128);
+
+            FileList tempUser = new FileList(user.getCount(), user.getUsername(), user.getFilename(), certificateForm.getEmail());
+            fileRepo.save(tempUser);
+
+            document.open();
+
+            Path imagePath = Paths.get("C:\\Users\\Mohit\\Desktop\\Internion-Backend\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\image\\bharat_logo.png");
+
+            Font titleFont = FontFactory.getFont(FontFactory.COURIER_BOLD, 18, BaseColor.BLACK);
+            Paragraph title = new Paragraph("Residence Certification Form", titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+
+            Font contentFont = FontFactory.getFont(FontFactory.COURIER_OBLIQUE, 12, BaseColor.BLACK);
+            Paragraph content = new Paragraph("This is to certify that Sri/Smt -", contentFont);
+            Font boldFont = FontFactory.getFont(FontFactory.COURIER_BOLD, 12, Font.BOLD, BaseColor.BLACK);
+            Chunk boldChunk = new Chunk(certificateForm.getName(), boldFont);
+            content.add(boldChunk);
+            content.add(new Chunk(" s/o, w/o ", contentFont));
+            content.add(new Chunk(certificateForm.getParent_name(), boldFont));
+
+            Paragraph content2 = new Paragraph("has been residing at the following address in Village/Town ", contentFont);
+            content2.add(new Chunk(certificateForm.getVillage(), boldFont));
+            content2.add(new Chunk(" of", contentFont));
+
+            Paragraph content3 = new Paragraph("the ");
+            Chunk talukaChunk = new Chunk(certificateForm.getTaluka(), boldFont);
+            content3.add(talukaChunk);
+            content3.add(new Chunk(" taluska of ", contentFont));
+            Chunk districtChunk = new Chunk(certificateForm.getDistrict(), boldFont);
+            content3.add(districtChunk);
+            content3.add(new Chunk(" District during the period noted below.", contentFont));
+
+            Paragraph content4 = new Paragraph("Village: " + certificateForm.getVillage(), boldFont);
+            Paragraph content5 = new Paragraph("Date of Registration: " + certificateForm.getDate_of_register(), boldFont);
+
+            content4.setAlignment(Element.ALIGN_LEFT);
+            content4.setLeading(14f);
+            content5.setAlignment(Element.ALIGN_LEFT);
+            content5.setLeading(14f);
+
+            try {
+                Image img = Image.getInstance(imagePath.toAbsolutePath().toString());
+                document.add(Chunk.NEWLINE);
+                img.scaleAbsolute(60f, 60f);
+                float xPosition = (document.getPageSize().getWidth() - img.getScaledWidth()) / 2;
+                img.setAbsolutePosition(xPosition, document.getPageSize().getHeight() - img.getScaledHeight() - 50); // Adjust the Y position as needed
+                document.add(img);
+                document.add(new Paragraph());
+                document.add(new Paragraph());
+                document.add(new Paragraph());
+                document.add(Chunk.NEWLINE);
+                document.add(Chunk.NEWLINE);
+                document.add(Chunk.NEWLINE);
+                document.add(Chunk.NEWLINE);
+                document.add(Chunk.NEWLINE);
+                document.add(Chunk.NEWLINE);
+                document.add(Chunk.NEWLINE);
+                document.add(Chunk.NEWLINE);
+                document.add(title);
+                document.add(Chunk.NEWLINE);
+                document.add(Chunk.NEWLINE);
+                document.add(content);
+                document.add(Chunk.NEWLINE);
+                document.add(content2);
+                document.add(Chunk.NEWLINE);
+                document.add(content3);
+                document.add(Chunk.NEWLINE);
+                document.add(Chunk.NEWLINE);
+                document.add(Chunk.NEWLINE);
+                document.add(content4);
+                document.add(Chunk.NEWLINE);
+                document.add(content5);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            document.close();
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+
+
     @PostMapping("/sendprivatemail")
     public String sendPrivateMail(@RequestBody ListOfUser listOfUser) throws MessagingException {
         privateMailSender.sendPrivateMail(listOfUser);
         return "mail sent successfully";
     }
+
+
     @GetMapping("/getdata")
     public java.util.List<UserEntity> getUserDetails(){
         List<UserEntity> userDetailsList=customUserDetailService.findAllUser();
@@ -368,32 +377,11 @@ public class PdfController {
         privateMailSender.sendEmailWithAttachmentToSingleUser("jatinjain.2011@gmail.com",null,userMailDto.getSender(),userMailDto.getFilename());
         return "Mail sent successfully";
     }
-    @GetMapping("/downloadFile/{filename}")
-    public ResponseEntity<Resource> downloadFile(
-                                                 @PathVariable("filename") String filename) {
-        try {
-            FileList file = fileRepo.findByFilename(filename);
 
-            if (file != null ) {
-                Path filePath = Paths.get("C:\\Users\\Mohit\\Desktop\\Internion\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\datafolder\\" + "jatin" + "\\" + filename + ".pdf");
-                Resource resource = new InputStreamResource(Files.newInputStream(filePath));
-
-                return ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename + ".pdf")
-                        .contentType(MediaType.APPLICATION_PDF)
-                        .body(resource);
-            } else {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
-            }
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
-
-    }
     @GetMapping("/download")
     public ResponseEntity<InputStreamResource> downloadPdf(@RequestParam String fileName ,@RequestParam String username) throws IOException {
         // Set the path to your PDF file
-        String directory = "C:\\Users\\Mohit\\Desktop\\Internion\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\datafolder\\";
+        String directory = "C:\\Users\\Mohit\\Desktop\\Internion-Backend\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\datafolder\\";
         String filePath = directory + username + "\\"+fileName;
 
         File file = new File(filePath);
@@ -409,8 +397,125 @@ public class PdfController {
                 .contentLength(file.length())
                 .body(resource);
     }
+}
+
+
+//    @GetMapping("/register/verified/{username}")
+//    public String verifyRegistration(@PathVariable(name = "username") String username){
+//        UserEntity temp=userRepo.findByEmail(username);
+//        temp.setVerify_email(true);
+//        userRepo.save(temp);
+//        return "success";
+//    }
+
+
+//    @GetMapping("/register/generateQr")
+//    public String generateQr(@RequestParam String email){
+//
+//        UserEntity temp=userRepo.findByEmail(email);
+//
+//        return twoFactorAuthService.generateQrCodeImageUri(temp.getSecret_key());
+//    }
 
 
 
 
-    }
+//    @PostMapping("/residenceform")
+//    public String getResidenceForm(@RequestBody ResidenceCertificateForm certificateForm){
+//        Document document = new Document();
+//        try {
+//            List<FileList> fileList = fileRepo.findAllByUsername(certificateForm.getName());
+//            if (fileList.isEmpty()) {
+//                Path path = Paths.get("C:\\Users\\Mohit\\Desktop\\Internion\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\datafolder\\"+certificateForm.getName());
+//                Files.createDirectories(path);
+//                //FileList user = FileList.builder().username(certificateForm.getName()).filename(certificateForm.getName() + "-" + "1").build();
+//               FileList user=new FileList(certificateForm.getName(),certificateForm.getName() + "-" + "1");
+//                PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream("C:\\Users\\Mohit\\Desktop\\Internion\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\datafolder\\" + certificateForm.getName() + "\\" + user.getFilename() + ".pdf"));
+//                writer.setEncryption(certificateForm.getName().getBytes(), certificateForm.getName().getBytes(), PdfWriter.ALLOW_PRINTING, PdfWriter.ENCRYPTION_AES_128);
+//                //FileList tempUser = FileList.builder().username(user.getUsername()).filename(user.getFilename()).count(1).build();
+//                FileList tempUser=new FileList(1,user.getUsername(),user.getFilename(),certificateForm.getEmail());
+//                fileRepo.save(tempUser);
+//            } else {
+//                Integer count = fileList.get(fileList.size()-1).getCount();
+//                int newCount = (count != null) ? count + 1 : 1;
+//                PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream("C:\\Users\\Mohit\\Desktop\\Internion\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\datafolder\\" + certificateForm.getName() + "\\" + certificateForm.getName() + "-" + newCount + ".pdf"));
+//                writer.setEncryption(certificateForm.getName().getBytes(), certificateForm.getName().getBytes(), PdfWriter.ALLOW_PRINTING, PdfWriter.ENCRYPTION_AES_128);
+//                //FileList tempUser = FileList.builder().username(fileList.getUsername()).filename(fileList.getFilename()).count(newCount).build();
+//                FileList tempUser=new FileList(newCount,certificateForm.getName(),  certificateForm.getName() + "-" + newCount,certificateForm.getEmail());
+//                fileRepo.save(tempUser);
+//            }
+//        } catch (Exception e) {
+//            return e.toString();
+//        }
+//
+//        document.open();
+//        Path imagePath = Paths.get("C:\\Users\\Mohit\\Desktop\\Internion\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\image\\bharat_logo.png");
+//
+//        Font titleFont = FontFactory.getFont(FontFactory.COURIER_BOLD, 18, BaseColor.BLACK);
+//        Paragraph title = new Paragraph("Residence Certification Form", titleFont);
+//        title.setAlignment(Element.ALIGN_CENTER);
+//        Font contentFont = FontFactory.getFont(FontFactory.COURIER_OBLIQUE, 12, BaseColor.BLACK);
+//        Paragraph content=new Paragraph("This is to certify that Sri/Smt -",contentFont);
+//        Font boldFont = FontFactory.getFont(FontFactory.COURIER_BOLD, 12, Font.BOLD, BaseColor.BLACK);
+//        Chunk boldChunk = new Chunk(certificateForm.getName(), boldFont);
+//        content.add(boldChunk);
+//        content.add(new Chunk(" s/o, w/o ",contentFont));
+//        content.add(new Chunk(certificateForm.getParent_name(), boldFont));
+//
+//        Paragraph content2 = new Paragraph("has been residing at the following address in Village/Town ", contentFont);
+//        content2.add(new Chunk(certificateForm.getVillage(),boldFont));
+//        content2.add(new Chunk(" of",contentFont));
+//        Paragraph content3=new Paragraph("the ");
+//        Chunk talukaChunk=new Chunk(certificateForm.getTaluka(),boldFont);
+//        content3.add(talukaChunk);
+//        content3.add(new Chunk(" taluska of ",contentFont));
+//        Chunk districtChunk=new Chunk(certificateForm.getDistrict(),boldFont);
+//        content3.add(districtChunk);
+//        content3.add(new Chunk(" District during the period noted below.",contentFont));
+//        //Paragraph content3 = new Paragraph("Kota taluska of Chittor District during the period noted below.", contentFont);
+//        Paragraph content4 = new Paragraph(certificateForm.getVillage(), boldFont);
+//        Paragraph content5 = new Paragraph(certificateForm.getDate_of_register(), boldFont);
+//
+//        content4.setAlignment(Element.ALIGN_LEFT);
+//        content4.setLeading(14f);
+//        content5.setAlignment(Element.ALIGN_LEFT);
+//        content5.setLeading(14f);
+//        try {
+//            Image img = Image.getInstance(imagePath.toAbsolutePath().toString());
+//            document.add(Chunk.NEWLINE);
+//            img.scaleAbsolute(60f, 60f);
+//            float xPosition = (document.getPageSize().getWidth() - img.getScaledWidth()) / 2;
+//            img.setAbsolutePosition(xPosition, document.getPageSize().getHeight() - img.getScaledHeight() - 50); // Adjust the Y position as needed
+//            document.add(img);
+//            document.add(new Paragraph());
+//            document.add(new Paragraph());
+//            document.add(new Paragraph());
+//            document.add(Chunk.NEWLINE);
+//            document.add(Chunk.NEWLINE);
+//            document.add(Chunk.NEWLINE);
+//            document.add(Chunk.NEWLINE);
+//            document.add(Chunk.NEWLINE);
+//            document.add(Chunk.NEWLINE);
+//            document.add(Chunk.NEWLINE);
+//            document.add(Chunk.NEWLINE);
+//            document.add(title);
+//            document.add(Chunk.NEWLINE);
+//            document.add(Chunk.NEWLINE);
+//            document.add(content);
+//            document.add(Chunk.NEWLINE);
+//            document.add(content2);
+//            document.add(Chunk.NEWLINE);
+//            document.add(content3);
+//            document.add(Chunk.NEWLINE);
+//            document.add(Chunk.NEWLINE);
+//            document.add(Chunk.NEWLINE);
+//            document.add(content4);
+//            document.add(Chunk.NEWLINE);
+//            document.add(content5);
+//        }
+//        catch (Exception e){
+//            return e.toString();
+//        }
+//        document.close();
+//        return "added success";
+//    }

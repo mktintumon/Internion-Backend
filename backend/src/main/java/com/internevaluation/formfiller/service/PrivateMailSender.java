@@ -6,6 +6,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
@@ -22,14 +23,15 @@ public class PrivateMailSender {
         if (listOfUser != null && listOfUser.getListUser() != null) {
             for (int i=0;i<listOfUser.getListUser().size();i++){
                 sendEmailWithAttachment(listOfUser.getListUser().get(i),buildEmail(listOfUser.getUsername(),listOfUser.getListUser().get(i)),listOfUser.getUsername(),listOfUser.getFilename());
-//            privateMailService.setInternalFilename(listOfUser.getFilename());
-//            privateMailService.send(listOfUser.getListUser().get(i),buildEmail(listOfUser.getUsername(),listOfUser.getListUser().get(i)));
             }
         }
     }
+
     private String buildEmail(String senderName, String receiverName) {
-        return "Sent from "+senderName+" password is your username.";
+        return "Document Sent from "+senderName+ ". " + " Document password is the sendername.";
     }
+
+    @Async
     public void sendEmailWithAttachment(String to, String text,String sender,String filename){
         try {
             MimeMessage message=javaMailSender.createMimeMessage();
@@ -37,7 +39,7 @@ public class PrivateMailSender {
             helper.setTo(to);
             helper.setSubject("Internion (Document)");
             helper.setText(buildEmail(sender,to));
-            byte[] pdfBytes = Files.readAllBytes(Paths.get("C:\\Users\\Mohit\\Desktop\\Internion\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\datafolder\\"+sender+"\\"+filename+".pdf"));
+            byte[] pdfBytes = Files.readAllBytes(Paths.get("C:\\Users\\Mohit\\Desktop\\Internion-Backend\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\datafolder\\"+sender+"\\"+filename+".pdf"));
             Resource pdfAttachment = new ByteArrayResource(pdfBytes);
             helper.addAttachment("document.pdf", pdfAttachment);
 
@@ -48,6 +50,7 @@ public class PrivateMailSender {
         }
     }
 
+    @Async
     public void sendEmailWithAttachmentToSingleUser(String to, String text,String sender,String filename){
         try {
             MimeMessage message=javaMailSender.createMimeMessage();
@@ -55,18 +58,17 @@ public class PrivateMailSender {
             helper.setTo(to);
             helper.setSubject("Internion (Document)");
             helper.setText(sendAdminMail(sender,filename));
-            byte[] pdfBytes = Files.readAllBytes(Paths.get("C:\\Users\\Mohit\\Desktop\\Internion\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\datafolder\\"+sender+"\\"+filename+".pdf"));
+            byte[] pdfBytes = Files.readAllBytes(Paths.get("C:\\Users\\Mohit\\Desktop\\Internion-Backend\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\datafolder\\"+sender+"\\"+filename+".pdf"));
             Resource pdfAttachment = new ByteArrayResource(pdfBytes);
             helper.addAttachment("document.pdf", pdfAttachment);
             javaMailSender.send(message);
         }catch (MessagingException | IOException e) {
             e.printStackTrace();
-            // Handle exceptions
         }
     }
 
 
     public String sendAdminMail(String sender, String filename){
-        return sender+" has requested you to approve his this document :"+filename;
+        return sender+" has requested you to approve his document : "+filename;
     }
 }
