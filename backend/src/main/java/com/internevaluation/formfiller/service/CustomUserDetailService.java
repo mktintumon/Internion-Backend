@@ -32,7 +32,7 @@ public class CustomUserDetailService implements UserDetailsService {
         if(userRepo.findByEmail(user.getUsername())!=null){
             throw new Exception("User Exist");
         }
-        String link= "http://localhost:8080/api/register/verified/"+user.getEmail();
+        String link= "https://formflow.int.cyraacs.in/api/register/verified/"+user.getEmail();
 
         emailSender.send(user.getEmail(),buildEmail(user.getUsername(),link));
         SecretGenerator generator = new DefaultSecretGenerator();

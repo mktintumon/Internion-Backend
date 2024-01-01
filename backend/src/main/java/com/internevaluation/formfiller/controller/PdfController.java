@@ -79,7 +79,7 @@ public class PdfController {
         userRepo.save(temp);
 
         // Redirect to http://localhost:3000/verify/{username}
-        return new RedirectView("http://localhost:3000/verify/" + username );
+        return new RedirectView("https://formflow.int.cyraacs.in/verify/" + username );
     }
 
     @GetMapping("/register/generateQr")
