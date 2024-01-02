@@ -93,14 +93,16 @@ public class DriveController {
             for(int i=0;i<fileLists.size();i++){
                 File file = new File();
                 file.setName(fileLists.get(i).getFilename());
-                FileContent content = new FileContent("application/pdf", new java.io.File("C:\\Users\\Jathin\\Downloads\\form-backend-internion-branch-2\\src\\main\\java\\com\\internevaluation\\formfiller\\datafolder\\"+fileLists.get(i).getUsername()+"\\"+fileLists.get(i).getFilename()+".pdf"));
+                FileContent content = new FileContent("application/pdf", new java.io.File("C:\\Users\\Mohit\\Desktop\\Internion-Backend\\backend\\src\\main\\java\\com\\internevaluation\\formfiller\\datafolder\\"+fileLists.get(i).getUsername()+"\\"+fileLists.get(i).getFilename()+".pdf"));
                 File uploadedFile = drive.files().create(file, content).setFields("id").execute();
                 String fileReference = String.format("{fileID: '%s'}", uploadedFile.getId());
+                System.out.println(uploadedFile.getId());
                 response.getWriter().write(fileReference);
             }
 
         }catch (GoogleJsonResponseException e){
-            System.out.println(e.getDetails());
+            System.out.println("mohit");
+            System.out.println(e.toString());
         }
     }
 //    @GetMapping("/getuser/{useremail}")

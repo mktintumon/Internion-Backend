@@ -87,7 +87,7 @@ public class PdfController {
         try {
             UserEntity temp = userRepo.findByEmail(email);
             if (temp != null) {
-                return twoFactorAuthService.generateQrCodeImageUri(temp.getSecret_key());
+                return twoFactorAuthService.generateQrCodeImageUri(temp.getSecret_key(),email);
             } else {
                 System.out.println("user not found");
                 return "User not found";

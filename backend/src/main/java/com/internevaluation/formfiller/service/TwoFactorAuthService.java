@@ -16,11 +16,11 @@ public class TwoFactorAuthService {
     public String generateNewSecret(){
         return new DefaultSecretGenerator().generate();
     }
-    public String generateQrCodeImageUri(String secret){
+    public String generateQrCodeImageUri(String secret,String email){
         QrData data=new QrData.Builder()
-                .label("Multi-Factor Auth Test")
+                .label(email)
                 .secret(secret)
-                    .issuer("Internion Team")
+                .issuer("Internion Team")
                 .algorithm(HashingAlgorithm.SHA1)
                 .digits(6)
                 .period(30)
